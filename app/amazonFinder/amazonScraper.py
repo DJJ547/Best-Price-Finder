@@ -14,7 +14,8 @@ class AmazonScraper:
                            'Chrome/109.0.0.0 Safari/537.36'),
             'Accept-Language': 'en-US, en;q=0.5'
         }
-        self.baseURL = 'https://www.amazon.com/s?k='
+        self.baseSearchURL = 'https://www.amazon.com/s?k='
+        self.baseURL = 'https://www.amazon.com'
         self.keyword = keyword
 
     def get_response(self):
@@ -22,7 +23,7 @@ class AmazonScraper:
         cheapest_item_ref = ''
 
         title = self.parse_url_string(self.keyword)
-        url = self.baseURL + title
+        url = self.baseSearchURL + title
         print(url)
         webpage = requests.get(url, headers=self.HEADERS)
         soup = BeautifulSoup(webpage.content, 'html.parser')
@@ -31,11 +32,26 @@ class AmazonScraper:
         for link in links:
             ref = link.find('a', {'class': 'a-link-normal s-no-outline'})['href']
             price = float(link.find('span', {'class': 'a-offscreen'}).text.replace('$', ''))
-            if price < cheapest_price:
+            title = link.find('a', {'class': 'a-link-normal s-underline-text s-underline-link-text s-link-style a-text-normal'}).text
+            if price < cheapest_price and self.check_similarity_between_keyword_and_title(title):
                 cheapest_price = price
-                cheapest_item_ref = ref
+                cheapest_item_ref = self.baseURL + ref
         return cheapest_price, cheapest_item_ref
 
     def parse_url_string(self, input_str):
-        print(input_str.replace(' ', '+'))
         return input_str.replace(' ', '+')
+
+    def check_similarity_between_keyword_and_title(self, title):
+        num_match = 0
+        list1 = self.keyword.split(' ')
+        print(list1)
+        list2 = title.split(' ')
+        print(list2)
+        for i in list1:
+            for j in list2:
+                if i == j:
+                    num_match += 1
+                    list2.remove(j)
+        if num_match / len(list1) >= 0.90:
+            return True
+        return False
