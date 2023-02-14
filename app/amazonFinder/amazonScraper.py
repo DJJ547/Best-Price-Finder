@@ -3,6 +3,7 @@ from glob import glob
 from bs4 import BeautifulSoup
 from datetime import datetime
 from time import sleep
+import urllib.parse
 
 
 class AmazonScraper:
@@ -22,9 +23,8 @@ class AmazonScraper:
         cheapest_price = float('inf')
         cheapest_item_ref = ''
 
-        title = self.parse_url_string(self.keyword)
-        url = self.baseSearchURL + title
-        print(url)
+        url_title = self.parse_url_string(self.keyword)
+        url = self.baseSearchURL + url_title
         webpage = requests.get(url, headers=self.HEADERS)
         soup = BeautifulSoup(webpage.content, 'html.parser')
         links = soup.find_all('div', attrs={'class': 'a-section a-spacing-base'})
@@ -39,8 +39,9 @@ class AmazonScraper:
         return cheapest_price, cheapest_item_ref
 
     def parse_url_string(self, input_str):
-        return input_str.replace(' ', '+')
+        return urllib.parse.quote_plus(input_str)
 
+    # if the provided keyword is equal or over 90% similar to the title of the search result, return true, else false.
     def check_similarity_between_keyword_and_title(self, title):
         num_match = 0
         list1 = self.keyword.split(' ')
